@@ -1,0 +1,17 @@
+{
+  "name": "todo-example",
+  "version": "0.1.0",
+  "description": "Multi container Node app to demonstrate architechture",
+  "main": "index.js",
+  "author": "chippawah <charles.cantrell@me.com>",
+  "license": "ISC",
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-coffee": "^2.3.3",
+    "gulp-pug": "^3.2.0",
+    "gulp-sourcemaps": "^2.4.0",
+    "gulp-stylus": "^2.6.0",
+    "run-sequence": "^1.2.2",
+    "watchify": "^3.9.0"
+  }
+}

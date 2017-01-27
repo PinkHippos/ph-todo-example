@@ -1,0 +1,93 @@
+version: '2'
+services:
+  ######
+  # Third Party Containers
+  ######
+  haproxy:
+    image: 'dockercloud/haproxy:latest'
+    ports:
+      - '80:80'
+    links:
+      - api
+      - auth
+      - frontend
+  rabbitmq:
+    image: 'rabbitmq:management'
+    ports:
+      - '15672:15672'
+  redis:
+    image: 'redis:3.0'
+  ######
+  # Frontend web server
+  ######
+  frontend:
+    build:
+      context: './ph_todo_frontend'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    expose:
+      - '80'
+    volumes:
+      - ./ph_todo_frontend/build:/usr/ph_todo_frontend
+      - ./ph_todo_frontend/node_modules:/usr/microserv/ph_todo_frontend
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+  ######
+  # Backend API server
+  ######
+  api:
+    build:
+      context: './ph_todo_api'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    expose:
+      - '80'
+    volumes:
+      - ./ph_todo_api/build:/usr/ph_todo_api
+      - ./ph_todo_api/node_modules:/usr/microserv/ph_todo_api
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+  ######
+  # Backend auth container
+  ######
+  auth:
+    build:
+      context: './ph_todo_auth'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    expose:
+      - '80'
+    volumes:
+      - ./ph_todo_auth/build:/usr/ph_todo_auth
+      - ./ph_todo_auth/node_modules:/usr/microserv/ph_todo_auth
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+      - redis
+  ######
+  # Backend worker container
+  ######
+  worker:
+    build:
+      context: './ph_todo_worker'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    expose:
+      - '80'
+    volumes:
+      - ./ph_todo_worker/build:/usr/ph_todo_worker
+      - ./ph_todo_worker/node_modules:/usr/microserv/ph_todo_worker
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+      - redis
