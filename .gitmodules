@@ -1,0 +1,15 @@
+[submodule "ph-todo-api"]
+	path = ph-todo-api
+	url = https://github.com/PinkHippos/ph-todo-api.git
+[submodule "ph-todo-auth"]
+	path = ph-todo-auth
+	url = https://github.com/PinkHippos/ph-todo-auth.git
+[submodule "ph-todo-db"]
+	path = ph-todo-db
+	url = https://github.com/PinkHippos/ph-todo-db.git
+[submodule "ph-todo-worker"]
+	path = ph-todo-worker
+	url = https://github.com/PinkHippos/ph-todo-worker.git
+[submodule "ph-todo-frontend"]
+	path = ph-todo-frontend
+	url = https://github.com/PinkHippos/ph-todo-frontend.git

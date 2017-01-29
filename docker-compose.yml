@@ -22,14 +22,14 @@ services:
   ######
   frontend:
     build:
-      context: './ph_todo_frontend'
+      context: './ph-todo-frontend'
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     expose:
       - '80'
     volumes:
-      - ./ph_todo_frontend/build:/usr/ph_todo_frontend
-      - ./ph_todo_frontend/node_modules:/usr/microserv/ph_todo_frontend
+      - ./ph-todo-frontend/build:/usr/ph-todo-frontend
+      - ./ph-todo-frontend/node_modules:/usr/microserv/ph-todo-frontend
     env_file:
       - ./common.env
       - ./secrets.env
@@ -40,32 +40,32 @@ services:
   ######
   api:
     build:
-      context: './ph_todo_api'
+      context: './ph-todo-api'
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     expose:
       - '80'
     volumes:
-      - ./ph_todo_api/build:/usr/ph_todo_api
-      - ./ph_todo_api/node_modules:/usr/microserv/ph_todo_api
+      - ./ph-todo-api/build:/usr/ph-todo-api
+      - ./ph-todo-api/node_modules:/usr/microserv/ph-todo-api
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
   ######
-  # Backend auth container
+  # Backend auth server
   ######
   auth:
     build:
-      context: './ph_todo_auth'
+      context: './ph-todo-auth'
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     expose:
       - '80'
     volumes:
-      - ./ph_todo_auth/build:/usr/ph_todo_auth
-      - ./ph_todo_auth/node_modules:/usr/microserv/ph_todo_auth
+      - ./ph-todo-auth/build:/usr/ph-todo-auth
+      - ./ph-todo-auth/node_modules:/usr/microserv/ph-todo-auth
     env_file:
       - ./common.env
       - ./secrets.env
@@ -73,21 +73,37 @@ services:
       - rabbitmq
       - redis
   ######
-  # Backend worker container
+  # Backend worker
   ######
   worker:
     build:
-      context: './ph_todo_worker'
+      context: './ph-todo-worker'
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     expose:
       - '80'
     volumes:
-      - ./ph_todo_worker/build:/usr/ph_todo_worker
-      - ./ph_todo_worker/node_modules:/usr/microserv/ph_todo_worker
+      - ./ph-todo-worker/build:/usr/ph-todo-worker
+      - ./ph-todo-worker/node_modules:/usr/microserv/ph-todo-worker
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
-      - redis
+  ######
+  # Backend DB worker
+  ######
+  db:
+    build:
+      context: './ph-todo-db'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    volumes:
+      - ./ph-todo-db/build:/usr/ph-todo-db
+      - ./ph-todo-db/node_modules:/usr/microserv/ph-todo-db
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+      - rethinkdb
