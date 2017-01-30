@@ -1,8 +1,8 @@
 gulp = require 'gulp'
 runSequence = require 'run-sequence'
 tasks = require "#{__dirname}/tasks"
-{browserify, bSync, coffee, pug} = tasks
-{nodemon, stylus, watchify, watch} = tasks
+{browserify, coffee, pug} = tasks
+{stylus, watchify, watch} = tasks
 
 ######
 # Place to store paths that will be used again
