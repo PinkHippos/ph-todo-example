@@ -69,7 +69,8 @@ gulp.task 'frontend:watch', (cb)->
   watch 'frontend', paths.coffee.compile, ['coffee:frontend', cb]
   watch 'frontend', paths.pug.compile, ['pug:frontend', cb]
   watch 'frontend', paths.stylus.compile, ['stylus:frontend', cb]
-gulp.task 'watchify', watchify paths.client_root
+gulp.task 'frontend:watchify', ->
+  watchify 'frontend', paths.client_root
 
 gulp.task 'worker:build', (cb)->
   gulp.task 'coffee:worker', coffee 'worker', paths.coffee.compile, 'build'

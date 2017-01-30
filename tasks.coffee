@@ -14,7 +14,7 @@ _addBase = (path)->
   base = "#{__dirname}/"
   if __dirname.split('/').pop() is 'tmp'
     base += '../'
-  base += 'modules/ph-todo-'
+  base += 'ph-todo-'
   if path[0] is '!'
     path = path.slice 1, path.length - 1
     "!#{base}#{path}"
@@ -60,6 +60,8 @@ _fixPath = (service, src, dest)->
   fixedPaths =
     src: fixedSrc
     dest: fixedDest
+  console.log """SRC: #{fixedSrc}
+  DEST: #{fixedDest}"""
   fixedPaths
 
 
@@ -181,7 +183,7 @@ module.exports =
     dest = if dest then "#{service}/#{dest}" else "#{service}/build/client"
     options =
       delay: 3000
-      entries: "modules/ph-todo-#{service}/build/#{root}"
+      entries: "ph-todo-#{service}/build/#{root}"
       debug: true
     watcher = watchify browserify(options), watchify.args
     _bundle watcher, dest
