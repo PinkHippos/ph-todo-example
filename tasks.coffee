@@ -60,8 +60,6 @@ _fixPath = (service, src, dest)->
   fixedPaths =
     src: fixedSrc
     dest: fixedDest
-  console.log """SRC: #{fixedSrc}
-  DEST: #{fixedDest}"""
   fixedPaths
 
 
