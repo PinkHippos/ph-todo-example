@@ -45,6 +45,7 @@ services:
       - ./secrets.env
     links:
       - rabbitmq
+
   ######
   # Backend API server
   ######
@@ -65,6 +66,7 @@ services:
       - ./secrets.env
     links:
       - rabbitmq
+
   ######
   # Backend auth server
   ######
@@ -86,8 +88,27 @@ services:
     links:
       - rabbitmq
       - redis
+
   ######
-  # Backend worker
+  # Backend DB worker
+  ######
+  db:
+  build:
+    context: './ph-todo-db'
+    dockerfile: 'Dockerfile.dev'
+  command: sh -c 'node provision.js; nodemon server.js'
+  volumes:
+    - ./ph-todo-db/build:/usr/ph-todo-db
+    - ./ph-todo-db/node_modules:/usr/microserv/ph-todo-db
+  env_file:
+    - ./common.env
+    - ./secrets.env
+  links:
+    - rabbitmq
+    - rethinkdb
+
+  ######
+  # Backend generic workers
   ######
   worker:
     build:
@@ -104,20 +125,3 @@ services:
       - ./secrets.env
     links:
       - rabbitmq
-  ######
-  # Backend DB worker
-  ######
-  db:
-    build:
-      context: './ph-todo-db'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
-    volumes:
-      - ./ph-todo-db/build:/usr/ph-todo-db
-      - ./ph-todo-db/node_modules:/usr/microserv/ph-todo-db
-    env_file:
-      - ./common.env
-      - ./secrets.env
-    links:
-      - rabbitmq
-      - rethinkdb
