@@ -8,7 +8,7 @@ tasks = require "#{__dirname}/tasks"
 # Place to store paths that will be used again
 # '../modules/ph-todo-<serviceName>' is appended
 paths =
-  client_root: 'build/client/js/app.js'
+  client_root: 'client/js/app.js'
   pug:
     compile: 'src/**/*.pug'
     all: ['src/**/*.pug']
