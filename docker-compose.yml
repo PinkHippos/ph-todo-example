@@ -11,16 +11,20 @@ services:
       - api
       - auth
       - frontend
+
   rabbitmq:
     image: 'rabbitmq:management'
     ports:
       - '15672:15672'
+
   redis:
     image: 'redis:3.0'
+
   rethinkdb:
     image: 'rethinkdb'
     ports:
       - '8080:8080'
+
   ######
   # Frontend web server
   ######
@@ -30,7 +34,7 @@ services:
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     environtment:
-      - VIRTUAL_HOST=/
+      - VIRTUAL_HOST=/,/*
     expose:
       - '80'
     volumes:
