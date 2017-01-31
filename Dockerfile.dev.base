@@ -1,4 +1,3 @@
 FROM node:argon
-WORKDIR /usr
+
 RUN npm i -g nodemon yarn
-RUN yarn install seneca seneca-amqp-transport seneca-legacy-logger tcp-ping
