@@ -4,90 +4,133 @@ services:
   # Third Party Containers
   ######
   haproxy:
-    image: 'dockercloud/haproxy:latest'
+    image: dockercloud/haproxy:latest
     ports:
       - '80:80'
     links:
       - api
-      - auth
-      - frontend
+      # - auth
+      # - frontend
+    # Linked with docker daemon so it can reload
+    # when new containers are added, destoryed, or restarted
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   rabbitmq:
-    image: 'rabbitmq:management'
+    image: rabbitmq:management
     ports:
       - '15672:15672'
-  redis:
-    image: 'redis:3.0'
+
+  # redis:
+  #   image: redis:3.0
+
+  rethinkdb:
+    image: rethinkdb
+    ports:
+      - '8080:8080'
+
   ######
   # Frontend web server
   ######
-  frontend:
-    build:
-      context: './ph_todo_frontend'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
-    expose:
-      - '80'
-    volumes:
-      - ./ph_todo_frontend/build:/usr/ph_todo_frontend
-      - ./ph_todo_frontend/node_modules:/usr/microserv/ph_todo_frontend
-    env_file:
-      - ./common.env
-      - ./secrets.env
-    links:
-      - rabbitmq
+  # frontend:
+  #   build:
+  #     context: './ph-todo-frontend'
+  #     dockerfile: 'Dockerfile.dev'
+  #   command: sh -c 'node provision.js; nodemon server.js'
+  #   environment:
+  #     - 'VIRTUAL_HOST=/,/*'
+  #   expose:
+  #     - '80'
+  #   volumes:
+  #     - ./ph-todo-frontend/build:/usr/ph-todo-frontend/build
+  #     - ./ph-todo-frontend/node_modules:/usr/ph-todo-frontend/node_modules
+  #   env_file:
+  #     - ./common.env
+  #     - ./secrets.env
+  #   links:
+  #     - rabbitmq
+
   ######
   # Backend API server
   ######
   api:
     build:
-      context: './ph_todo_api'
+      context: './ph-todo-api'
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
+    depends_on:
+      - worker
+      - db
+    environment:
+      - VIRTUAL_HOST=/api/*
     expose:
       - '80'
     volumes:
-      - ./ph_todo_api/build:/usr/ph_todo_api
-      - ./ph_todo_api/node_modules:/usr/microserv/ph_todo_api
+      - ./ph-todo-api/build:/usr/ph-todo-api/build
+      - ./ph-todo-api/node_modules:/usr/ph-todo-api/node_modules
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
+
   ######
-  # Backend auth container
+  # Backend auth server
   ######
-  auth:
+  # auth:
+  #   build:
+  #     context: './ph-todo-auth'
+  #     dockerfile: 'Dockerfile.dev'
+  #   command: sh -c 'node provision.js; nodemon server.js'
+  #   environment:
+  #     - 'VIRTUAL_HOST=/auth/*'
+  #   expose:
+  #     - '80'
+  #   volumes:
+  #     - ./ph-todo-auth/build:/usr/ph-todo-auth/build
+  #     - ./ph-todo-auth/node_modules:/usr/ph-todo-auth/node_modules
+  #   env_file:
+  #     - ./common.env
+  #     - ./secrets.env
+  #   links:
+  #     - rabbitmq
+  #     - redis
+
+  ######
+  # Backend DB worker
+  ######
+  db:
     build:
-      context: './ph_todo_auth'
+      context: './ph-todo-db'
       dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
-    expose:
-      - '80'
+    command: sh -c 'node provision.js; nodemon index.js'
+    depends_on:
+      - worker
     volumes:
-      - ./ph_todo_auth/build:/usr/ph_todo_auth
-      - ./ph_todo_auth/node_modules:/usr/microserv/ph_todo_auth
+      - ./ph-todo-db/build:/usr/ph-todo-db/build
+      - ./ph-todo-db/node_modules:/usr/ph-todo-db/node_modules
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
-      - redis
+      - rethinkdb
+
   ######
-  # Backend worker container
+  # Backend generic workers
   ######
   worker:
     build:
-      context: './ph_todo_worker'
+      context: './ph-todo-worker'
       dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
+    command: sh -c 'node provision.js; nodemon index.js'
     expose:
       - '80'
     volumes:
-      - ./ph_todo_worker/build:/usr/ph_todo_worker
-      - ./ph_todo_worker/node_modules:/usr/microserv/ph_todo_worker
+      - ./ph-todo-worker/build:/usr/ph-todo-worker/build
+      - ./ph-todo-worker/node_modules:/usr/ph-todo-worker/node_modules
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
-      - redis
