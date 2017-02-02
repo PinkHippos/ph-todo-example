@@ -38,7 +38,8 @@ services:
       dockerfile: 'Dockerfile.dev'
     command: sh -c 'node provision.js; nodemon server.js'
     environment:
-      - 'VIRTUAL_HOST=/,/*'
+      - VIRTUAL_HOST=/,/*
+      - VIRTUAL_HOST_WEIGHT=1
     expose:
       - '80'
     volumes:
@@ -63,6 +64,7 @@ services:
       - db
     environment:
       - VIRTUAL_HOST=/api/*
+      - VIRTUAL_HOST_WEIGHT=2
     expose:
       - '80'
     volumes:
