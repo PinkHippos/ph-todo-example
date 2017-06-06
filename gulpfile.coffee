@@ -1,13 +1,18 @@
 gulp = require 'gulp'
 runSequence = require 'run-sequence'
 tasks = require "#{__dirname}/tasks"
-{browserify, coffee, pug} = tasks
+{browserify, coffee, pug, move} = tasks
 {stylus, watchify, watch} = tasks
 
 ######
 # Place to store paths that will be used again
 # '../modules/ph-todo-<serviceName>' is appended
 paths =
+  vendor: [
+    'node_modules/bootstrap/dist/css/bootstrap.min.css'
+    'node_modules/bootstrap/dist/js/bootstrap.min.js'
+    'node_modules/jquery/dist/jquery.min.js'
+  ]
   client_root: 'client/js/app.js'
   pug:
     compile: 'src/**/*.pug'
@@ -64,7 +69,14 @@ gulp.task 'frontend:build', (cb)->
   gulp.task 'coffee:frontend', coffee 'frontend', paths.coffee.compile, 'build'
   gulp.task 'pug:frontend', pug 'frontend', paths.pug.compile, 'build'
   gulp.task 'stylus:frontend', stylus 'frontend', paths.stylus.compile, 'build'
-  runSequence ['coffee:frontend', 'pug:frontend', 'stylus:frontend'], cb
+  gulp.task 'vendor:frontend', ->
+    move 'frontend', paths.vendor, 'build/client/vendor'
+  runSequence [
+    'coffee:frontend'
+    'pug:frontend'
+    'stylus:frontend'
+    'vendor:frontend'
+    ], cb
 gulp.task 'frontend:watch', (cb)->
   watch 'frontend', paths.coffee.compile, ['coffee:frontend', cb]
   watch 'frontend', paths.pug.compile, ['pug:frontend', cb]

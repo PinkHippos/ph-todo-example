@@ -10,7 +10,7 @@ services:
     links:
       - api
       # - auth
-      # - frontend
+      - frontend
     # Linked with docker daemon so it can reload
     # when new containers are added, destoryed, or restarted
     volumes:
@@ -32,23 +32,24 @@ services:
   ######
   # Frontend web server
   ######
-  # frontend:
-  #   build:
-  #     context: './ph-todo-frontend'
-  #     dockerfile: 'Dockerfile.dev'
-  #   command: sh -c 'node provision.js; nodemon server.js'
-  #   environment:
-  #     - 'VIRTUAL_HOST=/,/*'
-  #   expose:
-  #     - '80'
-  #   volumes:
-  #     - ./ph-todo-frontend/build:/usr/ph-todo-frontend/build
-  #     - ./ph-todo-frontend/node_modules:/usr/ph-todo-frontend/node_modules
-  #   env_file:
-  #     - ./common.env
-  #     - ./secrets.env
-  #   links:
-  #     - rabbitmq
+  frontend:
+    build:
+      context: './ph-todo-frontend'
+      dockerfile: 'Dockerfile.dev'
+    command: sh -c 'node provision.js; nodemon server.js'
+    environment:
+      - VIRTUAL_HOST=/,/*
+      - VIRTUAL_HOST_WEIGHT=1
+    expose:
+      - '80'
+    volumes:
+      - ./ph-todo-frontend/build:/usr/ph-todo-frontend/build
+      - ./ph-todo-frontend/node_modules:/usr/ph-todo-frontend/node_modules
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
 
   ######
   # Backend API server
@@ -63,6 +64,7 @@ services:
       - db
     environment:
       - VIRTUAL_HOST=/api/*
+      - VIRTUAL_HOST_WEIGHT=2
     expose:
       - '80'
     volumes:
