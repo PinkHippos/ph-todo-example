@@ -84,7 +84,8 @@ services:
       dockerfile: 'Dockerfile'
     command: sh -c 'yarn build ; yarn start'
     environment:
-      - 'VIRTUAL_HOST=/auth/*'
+      - VIRTUAL_HOST=/auth/*
+      - VIRTUAL_HOST_WEIGHT=2
     expose:
       - '80'
     volumes:
