@@ -147,6 +147,44 @@ module.exports =
     gulp.src src
       .pipe gulp.dest dest
 
+  copy_src_files: (service, cb)->
+    src_path= "ph-todo-#{service}/src"
+    machine_path = "xendocker:/home/xenhippo/tmp/#{src_path}"
+    cmd = "
+    eval $(docker-machine env xendocker) ;\
+    docker-machine scp -r #{src_path} #{machine_path}
+    "
+    console.log "Gulp executing: #{cmd}"
+    exec cmd, (err, stdout, stderr)->
+      if err
+        console.error 'Error with exec', err
+        cb err
+      else
+        console.log stdout
+        console.log stderr
+        cb()
+
+  #### restart_container ####
+  # Restarts the corresponding docker-compose service
+  # Uses 'kill' and 'up -d' commands to ensure a good restart
+  restart_container: (service, cb)->
+    cmds = [
+      "docker-compose kill #{service};"
+      "docker-compose rm -f #{service};"
+      "docker-compose up -d #{service};"
+    ]
+    _err = null
+    for cmd in cmds
+      console.log "Gulp executing: #{cmd}"
+      exec cmd, (err, stdout, stderr)->
+        if err
+          console.error 'Error with exec', err
+          _err = err
+        else
+          console.log stdout
+          console.log stderr
+    cb _err
+
 
 
   ##### stylus #####
