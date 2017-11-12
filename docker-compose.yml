@@ -1,10 +1,10 @@
-version: '2'
+version: '3'
 services:
   ######
   # Third Party Containers
   ######
   haproxy:
-    image: dockercloud/haproxy:latest
+    image: dockercloud/haproxy:1.6.6
     ports:
       - '80:80'
     links:
@@ -35,16 +35,16 @@ services:
   frontend:
     build:
       context: './ph-todo-frontend'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
+      dockerfile: 'Dockerfile'
+    command: sh -c 'yarn build; yarn start'
     environment:
       - VIRTUAL_HOST=/,/*
       - VIRTUAL_HOST_WEIGHT=1
     expose:
       - '80'
     volumes:
-      - ./ph-todo-frontend/build:/usr/ph-todo-frontend/build
-      - ./ph-todo-frontend/node_modules:/usr/ph-todo-frontend/node_modules
+      - ./ph-todo-frontend/src:/microserv/src
+      - ./ph-todo-frontend/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
@@ -57,8 +57,8 @@ services:
   api:
     build:
       context: './ph-todo-api'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon server.js'
+      dockerfile: 'Dockerfile'
+    command: sh -c 'yarn build ; yarn start'
     depends_on:
       - worker
       - db
@@ -68,8 +68,7 @@ services:
     expose:
       - '80'
     volumes:
-      - ./ph-todo-api/build:/usr/ph-todo-api/build
-      - ./ph-todo-api/node_modules:/usr/ph-todo-api/node_modules
+      - ./ph-todo-api/src:/microserv/src
     env_file:
       - ./common.env
       - ./secrets.env
@@ -79,24 +78,24 @@ services:
   ######
   # Backend auth server
   ######
-  # auth:
-  #   build:
-  #     context: './ph-todo-auth'
-  #     dockerfile: 'Dockerfile.dev'
-  #   command: sh -c 'node provision.js; nodemon server.js'
-  #   environment:
-  #     - 'VIRTUAL_HOST=/auth/*'
-  #   expose:
-  #     - '80'
-  #   volumes:
-  #     - ./ph-todo-auth/build:/usr/ph-todo-auth/build
-  #     - ./ph-todo-auth/node_modules:/usr/ph-todo-auth/node_modules
-  #   env_file:
-  #     - ./common.env
-  #     - ./secrets.env
-  #   links:
-  #     - rabbitmq
-  #     - redis
+  auth:
+    build:
+      context: './ph-todo-auth'
+      dockerfile: 'Dockerfile'
+    command: sh -c 'yarn build ; yarn start'
+    environment:
+      - 'VIRTUAL_HOST=/auth/*'
+    expose:
+      - '80'
+    volumes:
+      - ./ph-todo-auth/src:/microserv/src
+      - ./ph-todo-auth/package.json:/microserv/package.json
+    env_file:
+      - ./common.env
+      - ./secrets.env
+    links:
+      - rabbitmq
+      - redis
 
   ######
   # Backend DB worker
@@ -104,13 +103,13 @@ services:
   db:
     build:
       context: './ph-todo-db'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon index.js'
+      dockerfile: 'Dockerfile'
+    command: sh -c 'yarn build ; yarn start'
     depends_on:
       - worker
     volumes:
-      - ./ph-todo-db/build:/usr/ph-todo-db/build
-      - ./ph-todo-db/node_modules:/usr/ph-todo-db/node_modules
+      - ./ph-todo-db/src:/src
+      - ./ph-todo-db/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
@@ -124,13 +123,13 @@ services:
   worker:
     build:
       context: './ph-todo-worker'
-      dockerfile: 'Dockerfile.dev'
-    command: sh -c 'node provision.js; nodemon index.js'
+      dockerfile: 'Dockerfile'
+    command: sh -c 'yarn build ; yarn start'
     expose:
       - '80'
     volumes:
-      - ./ph-todo-worker/build:/usr/ph-todo-worker/build
-      - ./ph-todo-worker/node_modules:/usr/ph-todo-worker/node_modules
+      - ./ph-todo-worker/src:/microserv/src
+      - ./ph-todo-worker/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
