@@ -21,8 +21,8 @@ services:
     ports:
       - '15672:15672'
 
-  # redis:
-  #   image: redis:3.0
+  redis:
+    image: redis:3.0
 
   rethinkdb:
     image: rethinkdb
