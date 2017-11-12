@@ -1,91 +1,53 @@
 gulp = require 'gulp'
-runSequence = require 'run-sequence'
-tasks = require "#{__dirname}/tasks"
-{browserify, coffee, pug, move} = tasks
-{stylus, watchify, watch} = tasks
+run_sequence = require 'run-sequence'
 
-######
-# Place to store paths that will be used again
-# '../modules/ph-todo-<serviceName>' is appended
-paths =
-  vendor: [
-    'node_modules/bootstrap/dist/css/bootstrap.min.css'
-    'node_modules/bootstrap/dist/js/bootstrap.min.js'
-    'node_modules/jquery/dist/jquery.min.js'
-  ]
-  client_root: 'client/js/app.js'
-  pug:
-    compile: 'src/**/*.pug'
-    all: ['src/**/*.pug']
-  server: 'build/server-assets/server.js'
-  stylus:
-    compile: 'src/**/**/*.styl'
-    all: ['src/**/**/*.styl']
-  coffee:
-    compile: 'src/**/*.coffee'
-    all: ['src/**/*.coffee']
+tasks = require "#{__dirname}/tasks"
+{build, clean, restart_container, watch, exec_cmds} = tasks
 
 
 gulp.task 'default', (cb)->
-  runSequence 'build', 'watch', cb
+  run_sequence 'docker', 'watch', cb
 
-gulp.task 'build', [
-  'api:build'
-  'auth:build'
-  'db:build'
-  'frontend:build'
-  'worker:build'
-]
+gulp.task 'docker', (cb)->
+  run_sequence 'docker:clean', 'docker:build', 'docker:start_base', cb
+gulp.task 'docker:clean', (cb)->
+  clean cb
+gulp.task 'docker:build', (cb)->
+  build cb
+gulp.task 'docker:start_base', (cb)->
+  base_services = [
+    'rethinkdb'
+    'rabbitmq'
+  ]
+  base_cmds = for service in base_services
+    "docker-compose up -d #{service}"
+  exec_cmds base_cmds, cb
 
 gulp.task 'watch', (cb)->
-  runSequence [
-    'api:watch'
-    'auth:watch'
-    'db:watch'
-    'frontend:watch'
-    'worker:watch'
-    'frontend:watchify'
+  run_sequence [
+    'watch:api'
+    'watch:auth'
+    'watch:db'
+    'watch:frontend'
+    'watch:worker'
   ], cb
 
-gulp.task 'api:build', (cb)->
-  gulp.task 'coffee:api', coffee 'api', paths.coffee.compile, 'build'
-  runSequence 'coffee:api', cb
-gulp.task 'api:watch', (cb)->
-  watch 'api', paths.coffee.compile, ['coffee:api', cb]
+set_tasks = (services)->
+  for service in services
+    console.log 'Creating restart and watch tasks for', service
+    gulp.task "restart:#{service}", (cb)->
+      restart_container service, cb
+    gulp.task "watch:#{service}", (cb)->
+      paths = [
+        'src/**/*.*'
+        'package.json'
+      ]
+      watch service, paths, ["restart:#{service}", cb]
 
-gulp.task 'auth:build', (cb)->
-  gulp.task 'coffee:auth', coffee 'auth', paths.coffee.compile, 'build'
-  runSequence 'coffee:auth', cb
-gulp.task 'auth:watch', (cb)->
-  watch 'auth', paths.coffee.compile, ['coffee:auth', cb]
-
-gulp.task 'db:build', (cb)->
-  gulp.task 'coffee:db', coffee 'db', paths.coffee.compile, 'build'
-  runSequence 'coffee:db', cb
-gulp.task 'db:watch', (cb)->
-  watch 'db', paths.coffee.compile, ['coffee:db', cb]
-
-gulp.task 'frontend:build', (cb)->
-  gulp.task 'coffee:frontend', coffee 'frontend', paths.coffee.compile, 'build'
-  gulp.task 'pug:frontend', pug 'frontend', paths.pug.compile, 'build'
-  gulp.task 'stylus:frontend', stylus 'frontend', paths.stylus.compile, 'build'
-  gulp.task 'vendor:frontend', ->
-    move 'frontend', paths.vendor, 'build/client/vendor'
-  runSequence [
-    'coffee:frontend'
-    'pug:frontend'
-    'stylus:frontend'
-    'vendor:frontend'
-    ], cb
-gulp.task 'frontend:watch', (cb)->
-  watch 'frontend', paths.coffee.compile, ['coffee:frontend', cb]
-  watch 'frontend', paths.pug.compile, ['pug:frontend', cb]
-  watch 'frontend', paths.stylus.compile, ['stylus:frontend', cb]
-gulp.task 'frontend:watchify', ->
-  watchify 'frontend', paths.client_root
-
-gulp.task 'worker:build', (cb)->
-  gulp.task 'coffee:worker', coffee 'worker', paths.coffee.compile, 'build'
-  runSequence 'coffee:worker', cb
-gulp.task 'worker:watch', (cb)->
-  watch 'worker', paths.coffee.compile, ['coffee:worker', cb]
+set_tasks [
+  'api'
+  'auth'
+  'db'
+  'frontend'
+  'worker'
+]
