@@ -33,7 +33,7 @@ gulp.task 'watch', (cb)->
   ], cb
 
 set_tasks = (services)->
-  for service in services
+  services.forEach (service)->
     console.log 'Creating restart and watch tasks for', service
     gulp.task "restart:#{service}", (cb)->
       restart_container service, cb

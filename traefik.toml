@@ -1,4 +1,5 @@
 defaultEntryPoints = ["http", "https"]
+
 [web]
 address = ":8080"
   [web.auth.basic]
@@ -11,13 +12,17 @@ address = ":8080"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
+
 [acme]
-  email = "charles.cantrell@me.com"
-  storage = "acme.json"
-  acmeLogging = true
-  entryPoint = "https"
-  onHostRule = true
-  onDemand = false
-  # caServer = "https://acme-staging.api.letsencrypt.org/directory"
+email = "charles.cantrell@me.com"
+storage = "acme.json"
+acmeLogging = true
+entryPoint = "https"
+onHostRule = true
+onDemand = false
+caServer = "https://acme-staging.api.letsencrypt.org/directory"
+[acme.httpChallenge]
+entryPoint = "http"
+
 [docker]
-  domain = "pinkhippos.io"
+domain = "pinkhippos.io"
