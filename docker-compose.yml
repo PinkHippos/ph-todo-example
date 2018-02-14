@@ -3,31 +3,76 @@ services:
   ######
   # Third Party Containers
   ######
-  haproxy:
-    image: dockercloud/haproxy:1.6.6
+  # haproxy:
+  #   image: dockercloud/haproxy:1.6.6
+  #   ports:
+  #     - '80:80'
+  #   links:
+  #     - api
+  #     # - auth
+  #     - frontend
+  #   # Linked with docker daemon so it can reload
+  #   # when new containers are added, destoryed, or restarted
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  traefik:
+    image: traefik
+    command: --docker --logLevel=DEBUG
+    labels:
+      - "traefik.frontend.rule=Host:monitor.pinkhippos.io"
+      - "traefik.port=8080"
+    networks:
+      - proxy
     ports:
-      - '80:80'
-    links:
-      - api
-      # - auth
-      - frontend
-    # Linked with docker daemon so it can reload
-    # when new containers are added, destoryed, or restarted
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - $PWD/traefik.toml:/traefik.toml
+      - $PWD/acme.json:/acme.json
+
+  portainer:
+    image: portainer/portainer:latest
+    expose:
+      - 9000
+    networks:
+      - proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.frontend.rule=Host:portainer.pinkhippos.io
+      - traefik.port=9000
+      - traefik.docker.network=proxy
 
   rabbitmq:
     image: rabbitmq:management
+    networks:
+      - internal
+    labels:
+      - 'traefik.enable=false'
     ports:
       - '15672:15672'
 
   redis:
     image: redis:3.0
+    networks:
+      - internal
+    labels:
+      - 'traefik.enable=false'
 
   rethinkdb:
     image: rethinkdb
-    ports:
-      - '8080:8080'
+    labels:
+      - traefik.backend=rethinkdb
+      - traefik.frontend.rule=Host:db-monitor.pinkhippos.io
+      - traefik.docker.network=proxy
+      - traefik.port=8080
+    networks:
+      - internal
+      - proxy
+    expose:
+      - '8080'
 
   ######
   # Frontend web server
@@ -36,15 +81,20 @@ services:
     build:
       context: './ph-todo-frontend'
       dockerfile: 'Dockerfile'
-    command: sh -c 'yarn build; yarn start'
-    environment:
-      - VIRTUAL_HOST=/,/*
-      - VIRTUAL_HOST_WEIGHT=1
+    command: sh -c 'yarn react:serve'
+    networks:
+      - proxy
+      - internal
+    labels:
+      - "traefik.backend=frontend"
+      - "traefik.port=80"
+      - "traefik.docker.network=proxy"
+      - "traefik.frontend.rule=Host:pinkhippos.io"
     expose:
       - '80'
-    volumes:
-      - ./ph-todo-frontend/src:/microserv/src
-      - ./ph-todo-frontend/package.json:/microserv/package.json
+    # volumes:
+    #   - ./ph-todo-frontend/src:/microserv/src
+    #   - ./ph-todo-frontend/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
@@ -59,16 +109,21 @@ services:
       context: './ph-todo-api'
       dockerfile: 'Dockerfile'
     command: sh -c 'yarn build ; yarn start'
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.backend=api"
+      - "traefik.port=80"
+      - "traefik.docker.network=proxy"
+      - "traefik.frontend.rule=Host:api.pinkhippos.io"
     depends_on:
       - worker
       - db
-    environment:
-      - VIRTUAL_HOST=/api/*
-      - VIRTUAL_HOST_WEIGHT=2
     expose:
       - '80'
-    volumes:
-      - ./ph-todo-api/src:/microserv/src
+    # volumes:
+    #   - ./ph-todo-api/src:/microserv/src
     env_file:
       - ./common.env
       - ./secrets.env
@@ -78,25 +133,25 @@ services:
   ######
   # Backend auth server
   ######
-  auth:
-    build:
-      context: './ph-todo-auth'
-      dockerfile: 'Dockerfile'
-    command: sh -c 'yarn build ; yarn start'
-    environment:
-      - VIRTUAL_HOST=/auth/*
-      - VIRTUAL_HOST_WEIGHT=2
-    expose:
-      - '80'
-    volumes:
-      - ./ph-todo-auth/src:/microserv/src
-      - ./ph-todo-auth/package.json:/microserv/package.json
-    env_file:
-      - ./common.env
-      - ./secrets.env
-    links:
-      - rabbitmq
-      - redis
+  # auth:
+  #   build:
+  #     context: './ph-todo-auth'
+  #     dockerfile: 'Dockerfile'
+  #   command: sh -c 'yarn build ; yarn start'
+  #   environment:
+  #     - VIRTUAL_HOST=/auth/*
+  #     - VIRTUAL_HOST_WEIGHT=2
+  #   expose:
+  #     - '80'
+  #   # volumes:
+  #   #   - ./ph-todo-auth/src:/microserv/src
+  #   #   - ./ph-todo-auth/package.json:/microserv/package.json
+  #   env_file:
+  #     - ./common.env
+  #     - ./secrets.env
+  #   links:
+  #     - rabbitmq
+  #     - redis
 
   ######
   # Backend DB worker
@@ -106,11 +161,15 @@ services:
       context: './ph-todo-db'
       dockerfile: 'Dockerfile'
     command: sh -c 'yarn build ; yarn start'
+    networks:
+      - internal
+    labels:
+      - 'traefik.enable=false'
     depends_on:
       - worker
-    volumes:
-      - ./ph-todo-db/src:/src
-      - ./ph-todo-db/package.json:/microserv/package.json
+    # volumes:
+    #   - ./ph-todo-db/src:/src
+    #   - ./ph-todo-db/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
@@ -126,13 +185,24 @@ services:
       context: './ph-todo-worker'
       dockerfile: 'Dockerfile'
     command: sh -c 'yarn build ; yarn start'
+    labels:
+      - 'traefik.enable=false'
+    networks:
+      - internal
+      - proxy
     expose:
       - '80'
-    volumes:
-      - ./ph-todo-worker/src:/microserv/src
-      - ./ph-todo-worker/package.json:/microserv/package.json
+    # volumes:
+    #   - ./ph-todo-worker/src:/microserv/src
+    #   - ./ph-todo-worker/package.json:/microserv/package.json
     env_file:
       - ./common.env
       - ./secrets.env
     links:
       - rabbitmq
+
+networks:
+  proxy:
+    external: true
+  internal:
+    external: false
