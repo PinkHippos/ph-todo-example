@@ -65,7 +65,7 @@ services:
     image: rethinkdb
     labels:
       - traefik.backend=rethinkdb
-      - traefik.frontend.rule=Host:db-monitor.pinkhippos.io
+      - traefik.frontend.rule=Host:db.pinkhippos.io
       - traefik.docker.network=proxy
       - traefik.port=8080
     networks:
@@ -89,7 +89,8 @@ services:
       - "traefik.backend=frontend"
       - "traefik.port=80"
       - "traefik.docker.network=proxy"
-      - "traefik.frontend.rule=Host:pinkhippos.io"
+      - 'traefik.frontend.rule=Host:pinkhippos.io'
+
     expose:
       - '80'
     # volumes:
@@ -116,7 +117,7 @@ services:
       - "traefik.backend=api"
       - "traefik.port=80"
       - "traefik.docker.network=proxy"
-      - "traefik.frontend.rule=Host:api.pinkhippos.io"
+      - "traefik.frontend.rule=Host:pinkhippos.io,PathPrefix:/api"
     depends_on:
       - worker
       - db
@@ -203,6 +204,6 @@ services:
 
 networks:
   proxy:
-    external: true
+    external: false
   internal:
     external: false
